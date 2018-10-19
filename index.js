@@ -7,7 +7,7 @@ const app = express();
 //#endregion
 
 var commvaultUrl = '/commvault';
-var commvaultPath = '/static/commvault.html'
+var commvaultPath = '/static/commvault/index.html'
 
 //#region Web Service Configuration
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path

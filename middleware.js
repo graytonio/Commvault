@@ -1,4 +1,4 @@
-const vault = require('./commvault');
+const vault = require('./middleware/commvault');
 const options = require("./options");
 
 module.exports.generateCommvaultReport = async function() {

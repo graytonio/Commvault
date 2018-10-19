@@ -378,13 +378,10 @@ function groupRegex(client_p, stem, base, invalidGroups) {
 //Get information about a specific Client and set client group ONLY TO BE USED IN ASYC FOR LOOP
 function getClientClientGroupIDByNamePromise(client_p, cb) {
   var invalidGroups = ['1', '2', '23', '32', '33', '138'];
-  console.log('Starting ' + client_p.name);
   client.getPromise(server + "Client/byName(clientName='" + client_p.name + "')", args).then(function(value) {
     var stem = value.data.App_GetClientPropertiesResponse.clientProperties;
     var base = stem.clientGroups;
-    console.log("Finding " + client_p.name);
     var group = groupRegex(client_p, stem, base, invalidGroups);
-    console.log("Found " + client_p.name);
     if (group == -1) {
       cb();
       return;
@@ -393,7 +390,6 @@ function getClientClientGroupIDByNamePromise(client_p, cb) {
     if (groups[group] == undefined) console.log(client_p.name + ": " + group);
     client_p.group = groups[group];
     clients.push(client_p);
-    console.log('I did it ' + client_p.name);
     cb();
     return;
   });
@@ -463,7 +459,6 @@ function getcAPPcDPFCount(lines) {
     });
     async.each(temp_clients, function(client, cb) {
         getClientClientGroupIDByNamePromise(client, cb);
-        console.log('Exited' + client.name);
       },
       function(err) {
         writeProgress("Parse Agent and Feature License Details");
