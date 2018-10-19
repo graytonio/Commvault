@@ -23,3 +23,7 @@ module.exports.generateCommvaultReport = async function() {
 
   vault.writeProgress('<a href="http://localhost:3000/FinalBillingReport.csv">Download Report Here</a>');
 }
+
+module.exports.clearCommvaultConsole = function() {
+  vault.resetProgress();
+}

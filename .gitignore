@@ -1,2 +1,4 @@
 node_modules/*
 options.js
+uploads/*
+progress.txt

@@ -6,19 +6,25 @@ const path = require('path');
 const app = express();
 //#endregion
 
-var commvaultPath = '/'
+var commvaultUrl = '/commvault';
+var commvaultPath = '/static/commvault.html'
 
 //#region Web Service Configuration
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path
 app.use(express.static('static')); //Static file path
 
+//#region Commvault
 //Serve index.html as root
-app.get(commvaultPath, function(req, res) {
-  res.sendFile(path.join(__dirname + '/static/index.html'));
+app.get(commvaultUrl, function(req, res) {
+  console.log("GET: /static/index.html");
+  res.sendFile(path.join(__dirname + commvaultPath));
+  calls.clearCommvaultConsole();
 });
+
 //When form submitted
-app.post(commvaultPath, function(req, res) {
+app.post(commvaultUrl, function(req, res) {
   //Move files to uploads and rename them
+  console.log("POST: /static/index.html");
   var form = new formidable.IncomingForm();
   form.parse(req);
   form.on('fileBegin', function(name, file) {
@@ -34,9 +40,11 @@ app.post(commvaultPath, function(req, res) {
   //Execute report function
   calls.generateCommvaultReport();
   //Return to root file
-  res.sendFile(__dirname + '/static/index.html');
+  res.sendFile(__dirname + commvaultPath);
 });
+//#endregion
 
 //Listen on port 3000
 app.listen(3000);
+console.log("Server started on localhost:3000");
 //#endregion

@@ -12,7 +12,7 @@ var groups = {
   4: "DSM",
   6: "VCSB",
   7: "DSM",
-  10: "Sims Crane",
+  10: "Sims Crane LKL",
   11: "DSM",
   13: "DSM",
   20: "Warner University",
@@ -46,7 +46,7 @@ var groups = {
   166: "Hunter Warfield",
   167: "AR Savage",
   168: "Pen Florida",
-  171: "Clark Campbell Servers",
+  171: "Center for Sales Strategy",
   172: "Clark Campbell Servers",
   173: "DSM"
 }
@@ -65,6 +65,8 @@ var args = {}
 
 /** Initializes variables to be used in other functions */
 module.exports.init = function(server_p, user_p, pass_p, debug_p) {
+  clientGroups = [];
+  clients = [];
   server = server_p;
   user = user_p;
   pass = pass_p;
@@ -104,22 +106,25 @@ module.exports.login = function() {
       writeProgress("Collecting Client Groups");
       client.getPromise(server + "ClientGroup", args).then(function(value) { //Send Request
         value.data.App_GetServerListResp.groups.forEach(function(element) { //For every client group in returned data
-          var name = groups[element.$.Id];
-          if (name == undefined) return;
-          var exists = clientGroups.some(function(el) {
+          var name = groups[element.$.Id]; //Get name out of client group
+          if (name == undefined) return; //Ignore irrelevant groups
+          if (name == "Sims Crane LKL") { //Special case for separating Sims Crane LKL and WH
+            clientGroups.push(new ClientGroup("Sims Crane WH"));
+            clientGroups[clientGroups.length - 1].knownNames.push("Sims Crane WH");
+          }
+          var exists = clientGroups.some(function(el) { //Does the group exist?
             return el.name === name;
           });
-          if (!exists) {
-            clientGroups.push(new ClientGroup(name));
-            clientGroups[clientGroups.length - 1].knownNames.push(element.$.name);
-          } else {
-            var group = clientGroups.find(function(element) {
+          if (!exists) { //If the group is new
+            clientGroups.push(new ClientGroup(name)); //Create a new ClientGroup
+            clientGroups[clientGroups.length - 1].knownNames.push(element.$.name); //Add the name to the known names
+          } else { //The group already exists
+            var group = clientGroups.find(function(element) { //Find it
               return element.name === name;
             });
-            group.knownNames.push(element.$.name);
+            group.knownNames.push(element.$.name); //Add the name to known names
           }
         });
-        //console.log(clientGroups);
         resolve();
       });
     });
@@ -129,14 +134,14 @@ module.exports.login = function() {
 /** Reads through the License Summary Report and stores necessary data in clientGroups Array */
 module.exports.parseLicenseFile = async function() {
   writeProgress("Reading License Report");
-  var content = fs.readFileSync("uploads/LicenseSummaryReport.csv", "utf8");
-  var lines = content.split("\r\n");
+  var content = fs.readFileSync("uploads/LicenseSummaryReport.csv", "utf8"); //Read in input file
+  var lines = content.split("\r\n"); //Split into lines
 
   writeProgress("Parsing cSIM Clients");
-  await getcSIMClientCount(lines);
+  await getcSIMClientCount(lines); //Send line array to function
 
   writeProgress("Parsing cAPP and cDPF Clients");
-  await getcAPPcDPFCount(lines);
+  await getcAPPcDPFCount(lines); //Send line array to other function
   return new Promise(resolve => {
     resolve();
   });
@@ -144,40 +149,38 @@ module.exports.parseLicenseFile = async function() {
 
 /** Reads through the CLient Usage Report and stores necessary data in the clientGroups Array */
 module.exports.parseUsageFile = function() {
-  //Read File in and Jump to Right Section
-  //Filter out any rows wher Library does not start with dsm
-  var content = fs.readFileSync("uploads/ClientUsageReport.csv", "utf8");
-  var lines = content.split("\r\n");
-  var realLines = [];
-  var titles;
+  var content = fs.readFileSync("uploads/ClientUsageReport.csv", "utf8"); //Read in input file
+  var lines = content.split("\r\n"); //Split into lines
+  var realLines = []; //Used to find all lines that refer to internal storage
+  var titles; //Store header information
 
   writeProgress("Reading Client Usage Report");
   var start = false;
   var readPos = 0;
-  lines.forEach(function(line) {
-    if (line == ("")) {
-      start = false;
+  lines.forEach(function(line) { //For every line
+    if (line == ("")) { //If the line is blank
+      start = false; //Then you have reached the end of the file
     }
-    if (start) {
-      var parts = line.split(',');
-      if (parts[readPos].startsWith('"DSM')) {
-        realLines.push(line);
+    if (start) { //If you are in the corrent section
+      var parts = line.split(','); //Split the line by comma
+      if ((parts[readPos].startsWith('"DSM') && !parts[readPos].includes('CJISNAS')) || parts[readPos].includes("CVSDS-Pool01")) { //If the library column is with DSM
+        realLines.push(line); //Save this line for more processing
       }
     }
-    if (line.includes('"Client","Agent","Instance","Subclient","Storage Policy","Copy","Library","Retention","Application Size (TB)","Data Written (TB)"')) {
-      start = true;
-      titles = line.split(',');
-      readPos = findHeader(titles, "Library");
+    if (line.includes('"Client","Agent","Instance","Subclient","Storage Policy","Copy","Library","Retention","Application Size (TB)","Data Written (TB)"')) { //If the line indicates the start of the correct table
+      start = true; //Set flag that it is time to start reading
+      titles = line.split(','); //save the header in titles
+      readPos = findHeader(titles, "Library"); //Find index of the library column
     }
   });
 
   writeProgress("Parsing Client Usage Data");
   //Read each Client Group and associate the size in GB to the Client Group
-  var groupPos = findHeader(titles, "Client Group");
-  var sizePos = findHeader(titles, "Data Written");
-  var clientPos = findHeader(titles, "Client");
+  var groupPos = findHeader(titles, "Client Group"); //Find index of Client Group column
+  var sizePos = findHeader(titles, "Data Written"); //Find index of Data Written column
+  var clientPos = findHeader(titles, "Client"); //Find index of Client column
 
-  realLines.forEach(function(line) {
+  realLines.forEach(function(line) { //For each of the relevant lines
     var parts = line.split(",");
     var groupName = parts[groupPos].split('"')[1];
     var group = undefined;
@@ -188,15 +191,32 @@ module.exports.parseUsageFile = function() {
           group = clientGroups.find(function(element) {
             return element.knownNames.indexOf(name.trim()) > -1;
           });
-          if (group != undefined && group.name.trim() == "DSM") {
-            if (name.trim() != 'DSM') {
-              if (parts[clientPos].toLowerCase().startsWith('"hwi') || parts[clientPos].toLowerCase().startsWith('"hw')) {
-                group = clientGroups.find(function(element) {
-                  return element.name == "Hunter Warfield";
-                });
-              } else if (!parts[clientPos].toLowerCase().startsWith('"dsm')) {
-                group = undefined;
+          if (group != undefined) {
+            if (group.name == "Sims Crane LKL" && parts[readPos].includes("WH")) {
+              group = clientGroups.find(function(element) {
+                return element.name == "Sims Crane WH";
+              });
+            }
+            if (group.name == "Hunter Warfield" && !groupName.includes("dsm-wh-vca01; Hunter Warfield")) {
+              group = undefined;
+              return;
+            }
+            if (group.name.trim() == "DSM") {
+              if (name.trim() != 'DSM') {
+                if (groupName.includes("dsm-wh-vca01; Hunter Warfield")) {
+                  group = clientGroups.find(function(element) {
+                    return element.name == "Hunter Warfield";
+                  });
+                } else if (!parts[clientPos].toLowerCase().startsWith('"dsm')) {
+                  group = undefined;
+                  return;
+                }
               }
+            }
+
+            if (group.name == "DSM" && !groupName.includes("Infrastructure")) {
+              group = undefined;
+              return;
             }
           }
         }
@@ -205,15 +225,37 @@ module.exports.parseUsageFile = function() {
       group = clientGroups.find(function(element) {
         return element.knownNames.indexOf(groupName) > -1;
       });
+      if (groupName == "Index Servers") {
+        if (parts[clientPos].toLowerCase().includes("sims_wh")) {
+          group = clientGroups.find(function(element) {
+            return element.name == "Sims Crane WH";
+          })
+        } else if (parts[clientPos].toLowerCase().includes("ccm")) {
+          group = clientGroups.find(function(element) {
+            return element.name == "Clark Campbell Servers";
+          })
+        } else if (parts[clientPos].toLowerCase().includes("hwi")) {
+          group = clientGroups.find(function(element) {
+            return element.name == "Hunter Warfield";
+          })
+        } else if (parts[clientPos].toLowerCase().includes("heacock")) {
+          group = clientGroups.find(function(element) {
+            return element.name == "Heacock Insurance";
+          })
+        } else if (parts[clientPos].toLowerCase().includes("fw_")) {
+          group = clientGroups.find(function(element) {
+            return element.name == "Fleetwing";
+          })
+        }
+      }
+      if (group.name == "Hunter Warfield") return;
     }
     if (group == undefined) {
-      console.log("------------------------");
-      console.log(parts[clientPos]);
-      console.log(groupName.split(";"));
-      console.log("------------------------");
+      return;
+    } else {
+      if (group.name == "SAO 20") console.log(parts[clientPos] + ":" + parts[sizePos]);
+      group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024);
     }
-    console.log(group.name + ":" + parts[clientPos] + ":" + parts[groupPos]);
-    group.size += parseFloat(parts[sizePos].split('"')[1]) * 1024;
   });
   return new Promise(resolve => {
     resolve();
@@ -227,8 +269,10 @@ module.exports.createReport = function() {
 
   fs.appendFileSync(__dirname + "/static/FinalBillingReport.csv", "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
 
+  clientGroups.sort(compare);
+
   clientGroups.forEach(function(element) {
-    fs.appendFile(__dirname + "/static/FinalBillingReport.csv", element.name + "," + element.size + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+    fs.appendFile(__dirname + "/static/FinalBillingReport.csv", element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
   });
 }
 
@@ -250,6 +294,14 @@ var resetProgress = module.exports.resetProgress = function(msg) {
 //#endregion
 
 //#region Internal Functions
+
+//Compare function for ClientGroup object
+function compare(a, b) {
+  if (a.name < b.name) return -1;
+  if (a.name > b.name) return 1;
+  return 0;
+}
+
 //Define a ClientGroup Object
 function ClientGroup(name) {
   this.name = name;
@@ -266,6 +318,7 @@ function ClientUser(name) {
   this.group;
 }
 
+//Return index of passed header name
 function findHeader(titles, head) {
   for (var i = 0; i < titles.length; i++) {
     if (titles[i].includes(head)) {
@@ -276,7 +329,7 @@ function findHeader(titles, head) {
 }
 
 //Recognize the Group a particular client belongs to
-function groupRegex(client_p, stem, base, invalidGroups, cb) {
+function groupRegex(client_p, stem, base, invalidGroups) {
   var offset = 0;
   do {
     if (base == undefined || stem.client.clientEntity.$.clientId == "-32000") {
@@ -301,7 +354,7 @@ function groupRegex(client_p, stem, base, invalidGroups, cb) {
       }
     } else {
       group = base[Object.keys(base)[0]].clientGroupId;
-      if (group == '13' || group == '7') {
+      if (group == '13' || group == '7' || group == '2') {
         if (!client_p.name.toLowerCase().startsWith("dsm")) {
           if (client_p.name.toLowerCase().startsWith("hw")) {
             group = 36;
@@ -309,7 +362,11 @@ function groupRegex(client_p, stem, base, invalidGroups, cb) {
             group = 127;
           } else if (client_p.name.toLowerCase().startsWith("hwi")) {
             group = 164;
+          } else if (client_p.name.toLowerCase().startsWith("css")) {
+            group = 171;
           }
+        } else {
+          group = 33;
         }
       }
     }
@@ -320,11 +377,14 @@ function groupRegex(client_p, stem, base, invalidGroups, cb) {
 
 //Get information about a specific Client and set client group ONLY TO BE USED IN ASYC FOR LOOP
 function getClientClientGroupIDByNamePromise(client_p, cb) {
-  var invalidGroups = ['1', '2', '23', '138'];
+  var invalidGroups = ['1', '2', '23', '32', '33', '138'];
+  console.log('Starting ' + client_p.name);
   client.getPromise(server + "Client/byName(clientName='" + client_p.name + "')", args).then(function(value) {
     var stem = value.data.App_GetClientPropertiesResponse.clientProperties;
     var base = stem.clientGroups;
+    console.log("Finding " + client_p.name);
     var group = groupRegex(client_p, stem, base, invalidGroups);
+    console.log("Found " + client_p.name);
     if (group == -1) {
       cb();
       return;
@@ -333,7 +393,9 @@ function getClientClientGroupIDByNamePromise(client_p, cb) {
     if (groups[group] == undefined) console.log(client_p.name + ": " + group);
     client_p.group = groups[group];
     clients.push(client_p);
+    console.log('I did it ' + client_p.name);
     cb();
+    return;
   });
 }
 
@@ -365,6 +427,7 @@ function getcSIMClientCount(lines) {
     });
 
     writeProgress("Parsing cSIM Client Data");
+
     //Get information for each client
     async.each(temp_clients, function(client, cb) {
       getClientClientGroupIDByNamePromise(client, cb);
@@ -392,7 +455,7 @@ function getcAPPcDPFCount(lines) {
         var client = clients.find(function(element) {
           return element.name === lineParts[3];
         });
-        if (client === undefined && lineParts[3] != "N/A") {
+        if (client == undefined && lineParts[3] != "N/A") {
           temp_clients.push(new ClientUser(lineParts[3]));
         }
       }
@@ -400,6 +463,7 @@ function getcAPPcDPFCount(lines) {
     });
     async.each(temp_clients, function(client, cb) {
         getClientClientGroupIDByNamePromise(client, cb);
+        console.log('Exited' + client.name);
       },
       function(err) {
         writeProgress("Parse Agent and Feature License Details");
@@ -443,7 +507,6 @@ function getcAPPcDPFCount(lines) {
         });
         resolve();
       });
-
   });
 }
 //#endregion
