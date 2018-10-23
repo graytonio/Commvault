@@ -2,7 +2,12 @@
 var fs = require('fs');
 var Client = require('node-rest-client-promise').Client;
 var client = new Client();
+var AWSoptions = require('../options').AWS;
 var async = require('async');
+var awsCli = require('aws-cli-js');
+var rimraf = require('rimraf');
+var Options = awsCli.Options;
+var Aws = awsCli.Aws;
 //#endregion
 
 //#region Variable Setup
@@ -22,6 +27,7 @@ var groups = {
   27: "B&W Growers",
   28: "AR Savage",
   31: "Raymond Handling",
+  33: "DSM",
   35: "DSM",
   36: "Hunter Warfield",
   37: "Hunter Warfield",
@@ -56,8 +62,7 @@ var auth = "",
   pass = "",
   server = "",
   debug = false;
-var clientGroups = [];
-var clients = [];
+
 var args = {}
 //#endregion
 
@@ -65,8 +70,6 @@ var args = {}
 
 /** Initializes variables to be used in other functions */
 module.exports.init = function(server_p, user_p, pass_p, debug_p) {
-  clientGroups = [];
-  clients = [];
   server = server_p;
   user = user_p;
   pass = pass_p;
@@ -74,7 +77,7 @@ module.exports.init = function(server_p, user_p, pass_p, debug_p) {
 };
 
 /** Sends login command and stores the authentication token */
-module.exports.login = function() {
+module.exports.login = function(id, clientGroups, clients) {
   return new Promise(resolve => {
     //Login XML Command
     var loginArgs = {
@@ -88,12 +91,12 @@ module.exports.login = function() {
       //Check that page returned correctly
       if (value.response.statusCode == 200) {
         if (auth == undefined) { //No token returned
-          writeProgress("Username or Password Incorrect. Please check for mistakes");
+          writeProgress("Username or Password Incorrect. Please check for mistakes", id);
           process.exit();
         } else { //Properly logged in
           //Look for and store auth token
           auth = value.data.DM2ContentIndexing_CheckCredentialResp.$.token;
-          writeProgress("Login accepted");
+          writeProgress("Login accepted", id);
         }
       }
       args = {
@@ -103,7 +106,7 @@ module.exports.login = function() {
         }
       }
 
-      writeProgress("Collecting Client Groups");
+      writeProgress("Collecting Client Groups", id);
       client.getPromise(server + "ClientGroup", args).then(function(value) { //Send Request
         value.data.App_GetServerListResp.groups.forEach(function(element) { //For every client group in returned data
           var name = groups[element.$.Id]; //Get name out of client group
@@ -132,29 +135,29 @@ module.exports.login = function() {
 };
 
 /** Reads through the License Summary Report and stores necessary data in clientGroups Array */
-module.exports.parseLicenseFile = async function() {
-  writeProgress("Reading License Report");
-  var content = fs.readFileSync("uploads/LicenseSummaryReport.csv", "utf8"); //Read in input file
+module.exports.parseLicenseFile = async function(id, clientGroups, clients) {
+  writeProgress("Reading License Report", id);
+  var content = fs.readFileSync(__dirname + "/../../public/uploads/" + id + "/LicenseSummaryReport.csv", "utf8"); //Read in input file
   var lines = content.split("\r\n"); //Split into lines
 
-  writeProgress("Parsing cSIM Clients");
-  await getcSIMClientCount(lines); //Send line array to function
+  writeProgress("Parsing cSIM Clients", id);
+  await getcSIMClientCount(lines, id, clientGroups, clients); //Send line array to function
 
-  writeProgress("Parsing cAPP and cDPF Clients");
-  await getcAPPcDPFCount(lines); //Send line array to other function
+  writeProgress("Parsing cAPP and cDPF Clients", id);
+  await getcAPPcDPFCount(lines, id, clientGroups, clients); //Send line array to other function
   return new Promise(resolve => {
     resolve();
   });
 };
 
 /** Reads through the CLient Usage Report and stores necessary data in the clientGroups Array */
-module.exports.parseUsageFile = function() {
-  var content = fs.readFileSync("uploads/ClientUsageReport.csv", "utf8"); //Read in input file
+module.exports.parseUsageFile = function(id, clientGroups, clients) {
+  var content = fs.readFileSync(__dirname + "/../../public/uploads/" + id + "/ClientUsageReport.csv", "utf8"); //Read in input file
   var lines = content.split("\r\n"); //Split into lines
   var realLines = []; //Used to find all lines that refer to internal storage
   var titles; //Store header information
 
-  writeProgress("Reading Client Usage Report");
+  writeProgress("Reading Client Usage Report", id);
   var start = false;
   var readPos = 0;
   lines.forEach(function(line) { //For every line
@@ -174,7 +177,7 @@ module.exports.parseUsageFile = function() {
     }
   });
 
-  writeProgress("Parsing Client Usage Data");
+  writeProgress("Parsing Client Usage Data", id);
   //Read each Client Group and associate the size in GB to the Client Group
   var groupPos = findHeader(titles, "Client Group"); //Find index of Client Group column
   var sizePos = findHeader(titles, "Data Written"); //Find index of Data Written column
@@ -253,7 +256,6 @@ module.exports.parseUsageFile = function() {
     if (group == undefined) {
       return;
     } else {
-      if (group.name == "SAO 20") console.log(parts[clientPos] + ":" + parts[sizePos]);
       group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024);
     }
   });
@@ -262,32 +264,66 @@ module.exports.parseUsageFile = function() {
   });
 }
 
-/** Creat the report to be downloaded by the client */
-module.exports.createReport = function() {
-  console.log("Creating a Report File");
-  fs.writeFile(__dirname + "/static/FinalBillingReport.csv", "", function(err) {});
 
-  fs.appendFileSync(__dirname + "/static/FinalBillingReport.csv", "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
+
+/** Creat the report to be downloaded by the client */
+module.exports.createReport = async function(id, clientGroups, clients) {
+  var downloadPath = "/../../public/downloads/FinalBillingReportCommvault_" + id + ".csv"
+  console.log("Creating a Report File");
+  fs.writeFile(__dirname + downloadPath, "", function(err) {});
+
+  fs.appendFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
+
+  var s3 = await getS3Storage();
+
+  var hwi = clientGroups.find(function(element) {
+    return element.name == "Hunter Warfield";
+  });
+
+  hwi.S3 = s3;
 
   clientGroups.sort(compare);
 
   clientGroups.forEach(function(element) {
-    fs.appendFile(__dirname + "/static/FinalBillingReport.csv", element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+    if (element.name == "Hunter Warfield") {
+      fs.appendFile(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+    } else {
+      fs.appendFile(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+    }
+  });
+
+  writeProgress('<a href="http://localhost:3000/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
+
+  rimraf('./public/uploads/' + id, function() {});
+
+  return new Promise(resolve => {
+    resolve();
   });
 }
 
 /** Write a line to the progress console in the browser window*/
-var writeProgress = module.exports.writeProgress = function(msg) {
-  fs.appendFile(__dirname + "/static/progress.txt", msg + "<br>", function(err) {
-    console.log(msg);
+var writeProgress = module.exports.writeProgress = function(msg, id) {
+  fs.appendFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", msg + "<br>", function(err) {
+    console.log(id + ": " + msg);
     if (err) return console.log(err);
   });
 };
 
 /** Clear progress text file*/
-var resetProgress = module.exports.resetProgress = function(msg) {
-  fs.writeFile(__dirname + "/static/progress.txt", "", function(err) {
+var resetProgress = module.exports.resetProgress = function(msg, id) {
+  fs.writeFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", "", function(err) {
     if (err) return console.log(err);
+  });
+}
+
+function getS3Storage() {
+  return new Promise(resolve => {
+    var aws = new Aws(AWSoptions);
+    var d = new Date();
+    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=hwi-dpaas Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) {
+      var size = data.object.Datapoints[0].Average / Math.pow(10, 12);
+      resolve(size);
+    });
   });
 }
 
@@ -306,6 +342,7 @@ function compare(a, b) {
 function ClientGroup(name) {
   this.name = name;
   this.size = 0;
+  this.S3 = 0;
   this.cSIM = 0;
   this.DPF = 0;
   this.APP = 0;
@@ -336,9 +373,6 @@ function groupRegex(client_p, stem, base, invalidGroups) {
       return -1;
     }
     if (Object.keys(base).length > 1) {
-      if (base[Object.keys(base)[0 + offset]] == undefined) {
-        console.log(client_p.name);
-      }
       if (offset >= Object.keys(base).length) {
         group = '13';
         break;
@@ -376,8 +410,8 @@ function groupRegex(client_p, stem, base, invalidGroups) {
 }
 
 //Get information about a specific Client and set client group ONLY TO BE USED IN ASYC FOR LOOP
-function getClientClientGroupIDByNamePromise(client_p, cb) {
-  var invalidGroups = ['1', '2', '23', '32', '33', '138'];
+function getClientClientGroupIDByNamePromise(client_p, cb, clients) {
+  var invalidGroups = ['1', '2', '23', '32', '138'];
   client.getPromise(server + "Client/byName(clientName='" + client_p.name + "')", args).then(function(value) {
     var stem = value.data.App_GetClientPropertiesResponse.clientProperties;
     var base = stem.clientGroups;
@@ -386,8 +420,6 @@ function getClientClientGroupIDByNamePromise(client_p, cb) {
       cb();
       return;
     }
-
-    if (groups[group] == undefined) console.log(client_p.name + ": " + group);
     client_p.group = groups[group];
     clients.push(client_p);
     cb();
@@ -405,7 +437,7 @@ function getClientGroupIDByNamePromise(o_group, cb) {
 }
 
 //Count clients by client group in specific table
-function getcSIMClientCount(lines) {
+function getcSIMClientCount(lines, id, clientGroups, clients) {
   var temp_clients = [];
   return new Promise(resolve => {
     var cSIM = false;
@@ -422,11 +454,11 @@ function getcSIMClientCount(lines) {
       if (line.includes("Virtual Machine Name,Last Backup Time,Size,")) cSIM = true; //Start
     });
 
-    writeProgress("Parsing cSIM Client Data");
+    writeProgress("Parsing cSIM Client Data", id);
 
     //Get information for each client
     async.each(temp_clients, function(client, cb) {
-      getClientClientGroupIDByNamePromise(client, cb);
+      getClientClientGroupIDByNamePromise(client, cb, clients);
     }, function(err) {
       //Count the number of clients per group
       clients.forEach(function(client) {
@@ -440,7 +472,7 @@ function getcSIMClientCount(lines) {
 }
 
 //Count clients by client group and application in specific table
-function getcAPPcDPFCount(lines) {
+function getcAPPcDPFCount(lines, id, clientGroups, clients) {
   var temp_clients = [];
   var start = false;
   return new Promise(resolve => {
@@ -458,10 +490,10 @@ function getcAPPcDPFCount(lines) {
       if (line.includes("Agent and Feature License DetailsLicense Type,Permanent Total,Permanent Used,Used By,Agent,Install Date,")) start = true;
     });
     async.each(temp_clients, function(client, cb) {
-        getClientClientGroupIDByNamePromise(client, cb);
+        getClientClientGroupIDByNamePromise(client, cb, clients);
       },
       function(err) {
-        writeProgress("Parse Agent and Feature License Details");
+        writeProgress("Parse Agent and Feature License Details", id);
         lines.forEach(function(line) {
           if (line === ("")) {
             start = false;

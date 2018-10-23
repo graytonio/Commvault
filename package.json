@@ -1,11 +1,11 @@
 {
-  "name": "DSM Automation Suite",
+  "name": "DSM-Automation-Suite",
   "version": "1.0.0",
   "description": "Commvault Usage Report Creation Tool",
   "main": "index.js",
   "dependencies": {
-    "alert-node": "^1.2.1",
     "async": "^2.6.1",
+    "aws-cli-js": "^2.0.4",
     "aws-sdk": "^2.325.0",
     "bootstrap": "^3.3.7",
     "delay": "^3.1.0",
@@ -16,12 +16,14 @@
     "node-outlook": "^1.1.8",
     "node-rest-client": "^3.1.0",
     "node-rest-client-promise": "^3.1.1",
-    "npm": "^6.4.1"
+    "node-schedule": "^1.3.0",
+    "npm": "^6.4.1",
+    "rimraf": "^2.6.2"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node src/index.js"
   },
   "author": "Grayton Ward",
   "license": "ISC"

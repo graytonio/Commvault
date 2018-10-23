@@ -1,4 +1,5 @@
 node_modules/*
 options.js
-uploads/*
-progress.txt
+public/downloads/*
+public/uploads/*
+public/static/comm/progress/*
