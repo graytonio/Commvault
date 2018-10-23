@@ -1,13 +1,12 @@
-Commvault Usage Report Creation Tool
+DSM Automation Suite
 
 Summary:
-A web tool designed to stream line the billing update process.  The tool takes the input of the two necessary reports, the License Summary Report and the Client Usage Report, and reads through and parses the data into the required spreadsheet to update the billing software.
+A web tool designed to stream line the manual processes in DSM.  It includes the following tools with more to come in the future.
 
-Usage:
-node index.js
+ - Commvault Billing Report Generator
 
 Note:
-Connection details are contained in the options file and should be changed for production
+Connection details are contained in the not included options file and should be changed for production
 
 Workflow:
 1. Application is deployed on an internal use server
