@@ -52,6 +52,7 @@ var groups = {
   166: "Hunter Warfield",
   167: "AR Savage",
   168: "Pen Florida",
+  169: "DSM",
   171: "Center for Sales Strategy",
   172: "Clark Campbell Servers",
   173: "DSM"
@@ -321,7 +322,7 @@ function getS3Storage() {
     var aws = new Aws(AWSoptions);
     var d = new Date();
     aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=hwi-dpaas Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) {
-      var size = data.object.Datapoints[0].Average / Math.pow(10, 12);
+      var size = data.object.Datapoints[0].Average / Math.pow(10, 9);
       resolve(size);
     });
   });
@@ -523,6 +524,15 @@ function getcAPPcDPFCount(lines, id, clientGroups, clients) {
               } else {
                 return;
               }
+
+              var groupLookup = clientGroups.find(function(element) {
+                return element.name === group;
+              });
+
+              if (groupLookup == undefined) {
+                console.log(clientLookup);
+              }
+
               clientGroups.find(function(element) {
                 return element.name === group;
               }).DPF++;
