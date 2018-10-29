@@ -253,7 +253,6 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
         }
       if (group.naem == "Hunter Warfield") return; 
      }
-
     }
     if (group == undefined) {
       return;
