@@ -251,8 +251,8 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
             return element.name == "Fleetwing";
           })
         }
+        if (group.name == "Hunter Warfield") return;
       }
-      if (group.name == "Hunter Warfield") return;
     }
     if (group == undefined) {
       return;
