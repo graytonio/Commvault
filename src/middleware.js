@@ -11,7 +11,9 @@ module.exports.generateCommvaultReport = async function(id) {
   //Grab command line options
   server = "http://" + options.server + ":81/SearchSvc/CVWebService.svc/";
   user = options.user;
-  pass = Buffer.from(options.pass).toString('base64'); //Password must be base64 encoded
+  pass = Buffer.from(options.pass).toString('base64'); //Password must be base64 encode
+  
+  console.log(id + ": Moving files");
 
   fs.renameSync("./public/uploads/ClientUsageReport.csv", "./public/uploads/" + id + "/ClientUsageReport.csv");
   fs.renameSync("./public/uploads/LicenseSummaryReport.csv", "./public/uploads/" + id + "/LicenseSummaryReport.csv");

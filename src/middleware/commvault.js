@@ -271,9 +271,8 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
 module.exports.createReport = async function(id, clientGroups, clients) {
   var downloadPath = "/../../public/downloads/FinalBillingReportCommvault_" + id + ".csv"
   console.log("Creating a Report File");
-  fs.writeFile(__dirname + downloadPath, "", function(err) {});
 
-  fs.appendFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
+  fs.writeFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
 
   var s3 = await getS3Storage();
 
@@ -287,13 +286,13 @@ module.exports.createReport = async function(id, clientGroups, clients) {
 
   clientGroups.forEach(function(element) {
     if (element.name == "Hunter Warfield") {
-      fs.appendFile(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
     } else {
-      fs.appendFile(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
     }
   });
 
-  writeProgress('<a href="http://localhost:3000/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
+  writeProgress('<a href="http://10.70.117.150/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
 
   rimraf('./public/uploads/' + id, function() {});
 
