@@ -5,6 +5,10 @@ const calls = require("./middleware");
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+var bodyParser = require('body-parser');
+var exec = require('child_process').exec;
+var url = require('url');
+var http = require('http');
 const app = express();
 //#endregion
 
@@ -25,6 +29,10 @@ var cost_calculatorPath = '/cost/index.html';
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path
 app.use(express.static('public/')); //public file path
 app.use(express.static('public/static/'));
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.use(bodyParser.json());
 //#endregion
 
 //#region Garbage Collection
@@ -49,6 +57,27 @@ scheduler.scheduleJob('0 * * * *', function() {
 
 //#region Commvault
 
+app.post(commvaultUrl + "/bug", function(req, res) {
+  var form = new formidable.IncomingForm();
+  form.parse(req);
+
+  var uID;
+
+  form.on('field', function(name, id) {
+    uID = id;
+  }).on('end', function() {
+    var cmd = `curl -X POST -H "Content-Type: application/json" -d '{"value1": "` + uID + `"}' https://maker.ifttt.com/trigger/commvault_bug/with/key/pJBcu_KvOXI5yTdv4jaxDCzfePjKs8bUzgo5OvspiS8`;
+    console.log(cmd);
+    exec(cmd, function(error, stdout, stderr) {
+      console.log('stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      if (error == null) console.log("Request made with " + uID);
+      res.status(200);
+      res.send("");
+    });
+  })
+})
+
 // Serve index.html as root
 app.get(commvaultUrl, function(req, res) {
   console.log("GET: /commvault");
@@ -66,6 +95,7 @@ app.post(commvaultUrl, function(req, res) {
   form.on('field', function(name, id) {
     if (!fs.existsSync("./public/uploads/" + id)) {
       fs.mkdirSync("./public/uploads/" + id);
+      fs.closeSync(fs.openSync("./public/static/comm/progress/progress_" + id + ".txt", 'w'));
     }
     uID = id;
   }).on('fileBegin', function(name, file) {
@@ -92,6 +122,6 @@ app.get(cost_calculatorUrl, function(req, res) {
 
 //#region Server Start
 //Listen on port 3000
-app.listen(80);
+app.listen(3000);
 console.log("Server started on localhost:80");
 //#endregion

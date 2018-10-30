@@ -36,6 +36,7 @@
       </div>
     </form>
     <div class="console"></div>
+    <button v-on:click="reportBug()" class="btn btn-danger btn-block">Report Error</button>
   </div>
 </body>
 
@@ -69,7 +70,14 @@
       onFileChange() {
         this.files = this.$refs.files.files;
       },
-
+      reportBug() {
+        let formData = new FormData();
+        formData.append("id", this.id);
+        axios.post('/commvault/bug', formData).then(function() {
+          console.log("Bug Submitted");
+          alert("Error reported");
+        });
+      },
       makeid() {
         var text = "";
         var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
