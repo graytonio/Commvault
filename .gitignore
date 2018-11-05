@@ -3,3 +3,4 @@ options.js
 public/downloads/*
 public/uploads/*
 public/static/comm/progress/*
+*.sh

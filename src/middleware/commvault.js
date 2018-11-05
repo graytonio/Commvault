@@ -217,7 +217,6 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
                 }
               }
             }
-
             if (group.name == "DSM" && !groupName.includes("Infrastructure")) {
               group = undefined;
               return;
