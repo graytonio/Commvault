@@ -167,7 +167,7 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
     }
     if (start) { //If you are in the corrent section
       var parts = line.split(','); //Split the line by comma
-      if ((parts[readPos].startsWith('"DSM') && !parts[readPos].includes('CJISNAS')) || parts[readPos].includes("CVSDS-Pool01")) { //If the library column is with DSM
+      if (parts[readPos].startsWith('"DSM') || parts[readPos].includes("CVSDS-Pool01")) { //If the library column is with DSM
         realLines.push(line); //Save this line for more processing
       }
     }
@@ -196,7 +196,7 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
             return element.knownNames.indexOf(name.trim()) > -1;
           });
           if (group != undefined) {
-            if (group.name == "Sims Crane LKL" && parts[readPos].includes("WH")) {
+            if (group.name == "Sims Crane LKL" && parts[readPos].includes("CVSDS")) {
               group = clientGroups.find(function(element) {
                 return element.name == "Sims Crane WH";
               });
@@ -251,12 +251,13 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
             return element.name == "Fleetwing";
           })
         }
-      if (group.naem == "Hunter Warfield") return; 
-     }
+        if (group.naem == "Hunter Warfield") return;
+      }
     }
     if (group == undefined) {
       return;
     } else {
+      console.log(parts[clientPos] + "::" + parts[groupPos] + "::" + parts[sizePos] + "::" + group.name);
       group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024);
     }
   });
@@ -292,7 +293,7 @@ module.exports.createReport = async function(id, clientGroups, clients) {
     }
   });
 
-  writeProgress('<a href="http://10.70.117.150/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
+  writeProgress('<a href="/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
 
   rimraf('./public/uploads/' + id, function() {});
 
@@ -310,7 +311,7 @@ var writeProgress = module.exports.writeProgress = function(msg, id) {
 };
 
 /** Clear progress text file*/
-var resetProgress = module.exports.resetProgress = function(msg, id) {
+var resetProgress = module.exports.resetProgress = function(id) {
   fs.writeFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", "", function(err) {
     if (err) return console.log(err);
   });
