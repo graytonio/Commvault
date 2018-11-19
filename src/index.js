@@ -16,7 +16,7 @@ var public_root = __dirname + "/../public/static"
 
 var garbagePaths = [
   "./public/downloads/",
-  "./public/static/comm/progress"
+  "./public/static/comm/progress/"
 ]
 
 var commvaultUrl = '/commvault';
