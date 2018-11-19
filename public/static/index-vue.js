@@ -53,7 +53,7 @@ var app = new Vue({
       },
       {
         "href": "/costcalc",
-        "img": "http://www.downtownsantacruz.com/wp-content/uploads/2018/03/coming-soon.png",
+        "img": "https://images.pexels.com/photos/159804/accountant-accounting-adviser-advisor-159804.jpeg?auto=compress&cs=tinysrgb&h=350",
         "desc": "A cost calculator"
       }
     ]
