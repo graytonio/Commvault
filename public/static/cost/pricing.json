@@ -12,33 +12,6 @@
         "unit": "Mbs"
       },
       {
-        "name": "SAN-Tier I Storage per GB - High IOPS",
-        "list": 0.19,
-        "default": 0,
-        "min": 0,
-        "max": 100000,
-        "inc": 50,
-        "unit": "GB"
-      },
-      {
-        "name": "SAN-Tier II Storage per GB - Standard IOPS",
-        "list": 0.09,
-        "default": 0,
-        "min": 0,
-        "max": 100000,
-        "inc": 50,
-        "unit": "GB"
-      },
-      {
-        "name": "SAN-Tier III Storage per GB - Low IOPS",
-        "list": 0.07,
-        "default": 100,
-        "min": 100,
-        "max": 100000,
-        "inc": 50,
-        "unit": "GB"
-      },
-      {
         "name": "vCD Size",
         "list": 1,
         "steps": [
@@ -89,6 +62,33 @@
         "max": 500,
         "inc": 1,
         "unit": "Ghz"
+      },
+      {
+        "name": "SAN-Tier I per GB - High IOPS",
+        "list": 0.19,
+        "default": 0,
+        "min": 0,
+        "max": 100000,
+        "inc": 50,
+        "unit": "GB"
+      },
+      {
+        "name": "SAN-Tier II per GB - Standard IOPS",
+        "list": 0.09,
+        "default": 0,
+        "min": 0,
+        "max": 100000,
+        "inc": 50,
+        "unit": "GB"
+      },
+      {
+        "name": "SAN-Tier III per GB - Low IOPS",
+        "list": 0.07,
+        "default": 100,
+        "min": 100,
+        "max": 100000,
+        "inc": 50,
+        "unit": "GB"
       }
     ]
   },

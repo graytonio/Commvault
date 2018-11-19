@@ -22,18 +22,18 @@
       color: #04c6d1;
     }
     .wrapper {
-      background-color: rgba(4, 198, 209, 0.2);
-      display: flex;
+      outline: 2px solid black;
+      background-color: rgba(100, 100, 100, 0.2);
       align-items: stretch;
     }
 
-    #content.card-columns{
+    #title{
       outline: 2px solid black;
     }
 
     #sidebar {
       outline: 2px solid black;
-      background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(100, 100, 100, 0.2);
       min-width: 24%;
       max-width: 24%;
       text-align: center;
@@ -87,17 +87,19 @@
       }
     },
 
-    template: `<div class="wrapper">
+    template: `
+    <div class="wrapper">
+        <div id="title"><h1>Total: \${{totalPrice}}</h1></div>
         <div class="card-columns p-2" id="content">
           <template v-for="(prop, index) in props">
             <property v-if="prop.inc" :name=prop.name :list=prop.list :def=prop.default :min=prop.min :max=prop.max :inc=prop.inc :index=index :unit=prop.unit v-on:inputChange="updateTotalPrice"></property>
             <property v-if="prop.steps" :name=prop.name :list=prop.list :def=prop.default :min=prop.min :max=prop.max :steps=prop.steps :index=index :unit="prop.unit" v-on:inputChange="updateTotalPrice"></property>
           </template>
+
         </div>
-      <nav id="sidebar">
-        <h2>Total: \${{totalPrice}}</h2>
-      </nav>
-    </div>`
+
+    </div>
+    `
   });
 
   Vue.component('property', {

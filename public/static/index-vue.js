@@ -52,7 +52,7 @@ var app = new Vue({
         "desc": "Generate a billing report with the Commvault License and Usage reports"
       },
       {
-        "href": "",
+        "href": "/costcalc",
         "img": "http://www.downtownsantacruz.com/wp-content/uploads/2018/03/coming-soon.png",
         "desc": "A cost calculator"
       }
