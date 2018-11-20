@@ -13,8 +13,6 @@ Vue.component('automation-task', {
       </h3>
     </div>
   </div>
-
-
   `,
 });
 
