@@ -11,7 +11,7 @@ const url = require('url');
 const http = require('http');
 const cors = require('cors');
 const app = express();
-const port = require('./port');
+const port = require('./port').port;
 //#endregion
 
 var public_root = __dirname + "/../public/static"
