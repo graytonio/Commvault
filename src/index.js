@@ -27,6 +27,7 @@ var cost_calculatorUrl = '/costcalc';
 var cost_calculatorPath = '/cost/index.html';
 
 //#region Web Service Configuration
+var port = 8081
 app.use(cors());
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path
 app.use(express.static('public/')); //public file path
@@ -79,12 +80,6 @@ app.post(commvaultUrl + "/bug", function(req, res) {
     });
   })
 })
-
-// Serve index.html as root
-// app.get(commvaultUrl, function(req, res) {
-//   console.log("GET: /commvault");
-//   res.sendFile(path.join(public_root + commvaultPath));
-// });
 
 //When form submitted
 app.post(commvaultUrl, function(req, res) {
