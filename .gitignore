@@ -4,3 +4,4 @@ public/downloads/*
 public/uploads/*
 public/static/comm/progress/*
 *.sh
+port.js

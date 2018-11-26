@@ -11,6 +11,7 @@ const url = require('url');
 const http = require('http');
 const cors = require('cors');
 const app = express();
+const port = require('./port');
 //#endregion
 
 var public_root = __dirname + "/../public/static"
@@ -27,7 +28,6 @@ var cost_calculatorUrl = '/costcalc';
 var cost_calculatorPath = '/cost/index.html';
 
 //#region Web Service Configuration
-var port = 8081
 app.use(cors());
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path
 app.use(express.static('public/')); //public file path
