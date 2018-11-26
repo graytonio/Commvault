@@ -5,10 +5,11 @@ const calls = require("./middleware");
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-var bodyParser = require('body-parser');
-var exec = require('child_process').exec;
-var url = require('url');
-var http = require('http');
+const bodyParser = require('body-parser');
+const exec = require('child_process').exec;
+const url = require('url');
+const http = require('http');
+const cors = require('cors');
 const app = express();
 //#endregion
 
@@ -26,6 +27,7 @@ var cost_calculatorUrl = '/costcalc';
 var cost_calculatorPath = '/cost/index.html';
 
 //#region Web Service Configuration
+app.use(cors());
 app.use(express.static('node_modules/bootstrap/dist/')); //Bootstrap css path
 app.use(express.static('public/')); //public file path
 app.use(express.static('public/static/'));
@@ -79,10 +81,10 @@ app.post(commvaultUrl + "/bug", function(req, res) {
 })
 
 // Serve index.html as root
-app.get(commvaultUrl, function(req, res) {
-  console.log("GET: /commvault");
-  res.sendFile(path.join(public_root + commvaultPath));
-});
+// app.get(commvaultUrl, function(req, res) {
+//   console.log("GET: /commvault");
+//   res.sendFile(path.join(public_root + commvaultPath));
+// });
 
 //When form submitted
 app.post(commvaultUrl, function(req, res) {
@@ -108,7 +110,7 @@ app.post(commvaultUrl, function(req, res) {
     console.log('Uploaded ' + file.name);
   }).on('end', function() {
     calls.generateCommvaultReport(uID);
-    res.sendFile(path.join(public_root + commvaultPath));
+    res.send("");
   })
 });
 //#endregion
@@ -122,6 +124,6 @@ app.get(cost_calculatorUrl, function(req, res) {
 
 //#region Server Start
 //Listen on port 3000
-app.listen(80);
-console.log("Server started on localhost:80");
+app.listen(8081);
+console.log("Server started on localhost:8081");
 //#endregion
