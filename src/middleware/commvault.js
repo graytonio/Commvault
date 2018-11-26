@@ -292,7 +292,7 @@ module.exports.createReport = async function(id, clientGroups, clients) {
     }
   });
 
-  writeProgress('<a href="http://localhost:8081/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
+  writeProgress('<a href="http://10.70.117.150:8081/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
 
   rimraf('./public/uploads/' + id, function() {});
 
