@@ -119,6 +119,6 @@ app.get(cost_calculatorUrl, function(req, res) {
 
 //#region Server Start
 //Listen on port 3000
-app.listen(8081);
-console.log("Server started on localhost:8081");
+app.listen(port);
+console.log("Server started on localhost:" + port);
 //#endregion
