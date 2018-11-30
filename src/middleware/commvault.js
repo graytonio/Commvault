@@ -11,6 +11,7 @@ var Aws = awsCli.Aws;
 //#endregion
 
 //#region Variable Setup
+//Group ID to Client Look Up Table
 var groups = {
   0: "Invalid or Missing Group",
   3: "VCSB",
@@ -250,13 +251,12 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
             return element.name == "Fleetwing";
           })
         }
-        if (group.naem == "Hunter Warfield") return;
+        if (group.name == "Hunter Warfield") return;
       }
     }
     if (group == undefined) {
       return;
     } else {
-      console.log(parts[clientPos] + "::" + parts[groupPos] + "::" + parts[sizePos] + "::" + group.name);
       group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024);
     }
   });
