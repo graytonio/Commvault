@@ -280,7 +280,7 @@ module.exports.createReport = async function(id, clientGroups, clients) {
     return element.name == "Hunter Warfield";
   });
 
-  if(hwi) hwi.S3 = s3;
+  if(hwi != undefined) hwi.S3 = s3;
 
   clientGroups.sort(compare);
 
