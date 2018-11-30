@@ -110,13 +110,6 @@ app.post(commvaultUrl, function(req, res) {
 });
 //#endregion
 
-//#region Cost cost_calculator
-app.get(cost_calculatorUrl, function(req, res) {
-  console.log("GET: " + cost_calculatorUrl);
-  res.sendFile(path.join(public_root + cost_calculatorPath));
-});
-//#endregion
-
 //#region Server Start
 //Listen on port 3000
 app.listen(port);
