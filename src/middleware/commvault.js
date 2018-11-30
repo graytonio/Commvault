@@ -59,11 +59,7 @@ var groups = {
   173: "DSM"
 }
 
-var auth = "",
-  user = "",
-  pass = "",
-  server = "",
-  debug = false;
+var auth = "", user = "", pass = "", server = "", debug = false;
 
 var args = {}
 //#endregion
@@ -81,14 +77,14 @@ module.exports.init = function(server_p, user_p, pass_p, debug_p) {
 /** Sends login command and stores the authentication token */
 module.exports.login = function(id, clientGroups, clients) {
   return new Promise(resolve => {
-    //Login XML Command
+    //Login XML Body
     var loginArgs = {
       data: '<DM2ContentIndexing_CheckCredentialReq username="DSM\\' + user + '" password="' + pass + '" />',
       headers: {
         "Content-Type": "application/xml"
       }
     }
-    //Send Command
+    //Send Login Request
     client.postPromise(server + "Login", loginArgs).then(function(value) {
       //Check that page returned correctly
       if (value.response.statusCode == 200) {
@@ -101,6 +97,7 @@ module.exports.login = function(id, clientGroups, clients) {
           writeProgress("Login accepted", id);
         }
       }
+      //Save Auth Token
       args = {
         headers: {
           "Content-Type": "application/xml",
@@ -186,78 +183,79 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
   var clientPos = findHeader(titles, "Client"); //Find index of Client column
 
   realLines.forEach(function(line) { //For each of the relevant lines
-    var parts = line.split(",");
-    var groupName = parts[groupPos].split('"')[1];
+    var parts = line.split(","); //Split into columns
+    var groupName = parts[groupPos].split('"')[1]; //Find the client group column values
     var group = undefined;
-    if (groupName.length == 0) return;
-    if (groupName.split(";").length > 1) {
-      groupName.split(";").forEach(function(name) {
-        if (group == undefined) {
-          group = clientGroups.find(function(element) {
-            return element.knownNames.indexOf(name.trim()) > -1;
+    if (groupName.length == 0) return; //If there are no groups it is not a valid line
+    if (groupName.split(";").length > 1) { //If there is more than one group name
+      groupName.split(";").forEach(function(name) { //For each of the group names
+        if (group == undefined) { //If group is still unknown
+          group = clientGroups.find(function(element) { //Find the client group
+            return element.knownNames.indexOf(name.trim()) > -1; //Where the group name is related to a customer name
           });
-          if (group != undefined) {
-            if (group.name == "Sims Crane LKL" && parts[readPos].includes("CVSDS")) {
-              group = clientGroups.find(function(element) {
+
+          if (group != undefined) { //If a group was found
+            if (group.name == "Sims Crane LKL" && parts[readPos].includes("CVSDS")) { //If the croup was Sims Crane and should be in WH
+              group = clientGroups.find(function(element) { //Return the Sims Crane WH group
                 return element.name == "Sims Crane WH";
               });
             }
-            if (group.name == "Hunter Warfield" && !groupName.includes("dsm-wh-vca01; Hunter Warfield")) {
-              group = undefined;
+            if (group.name == "Hunter Warfield" && !groupName.includes("dsm-wh-vca01; Hunter Warfield")) { //If the group was Hunter Warfield and it should not be counted
+              group = undefined; //Try again
               return;
             }
-            if (group.name.trim() == "DSM") {
-              if (name.trim() != 'DSM') {
-                if (groupName.includes("dsm-wh-vca01; Hunter Warfield")) {
+            if (group.name.trim() == "DSM") { //If the group was dsm
+              if (name.trim() != 'DSM') { //If the group name is not just DSM
+                if (groupName.includes("dsm-wh-vca01; Hunter Warfield")) { //If the group names include Hunter Warfield
                   group = clientGroups.find(function(element) {
-                    return element.name == "Hunter Warfield";
+                    return element.name == "Hunter Warfield"; //The group is Hunter Warfield
                   });
-                } else if (!parts[clientPos].toLowerCase().startsWith('"dsm')) {
-                  group = undefined;
+                } else if (!parts[clientPos].toLowerCase().startsWith('"dsm')) { //If the client name does start with DSM
+                  group = undefined; //Try again
                   return;
                 }
               }
             }
-            if (group.name == "DSM" && !groupName.includes("Infrastructure")) {
-              group = undefined;
+            if (group.name == "DSM" && !groupName.includes("Infrastructure")) { //If the client is Infrastructure
+              group = undefined; //Try again
               return;
             }
           }
         }
       });
-    } else {
+    } else { //If there is only one name
       group = clientGroups.find(function(element) {
-        return element.knownNames.indexOf(groupName) > -1;
+        return element.knownNames.indexOf(groupName) > -1; //Find the customer related to that group name
       });
-      if (groupName == "Index Servers") {
-        if (parts[clientPos].toLowerCase().includes("sims_wh")) {
-          group = clientGroups.find(function(element) {
+      if (groupName == "Index Servers") { //If the group is Index Servers
+        if (parts[clientPos].toLowerCase().includes("sims_wh")) { //If the client starts with sims_wh
+          group = clientGroups.find(function(element) { //The group is Sims Crane WH
             return element.name == "Sims Crane WH";
           })
-        } else if (parts[clientPos].toLowerCase().includes("ccm")) {
-          group = clientGroups.find(function(element) {
+        } else if (parts[clientPos].toLowerCase().includes("ccm")) { //If the client starts with ccm
+          group = clientGroups.find(function(element) { //The group is Clark Campbell Server
             return element.name == "Clark Campbell Servers";
           })
-        } else if (parts[clientPos].toLowerCase().includes("hwi")) {
-          group = clientGroups.find(function(element) {
+        } else if (parts[clientPos].toLowerCase().includes("hwi")) { //If the client starts with hwi
+          group = clientGroups.find(function(element) { //The group is Hunter Warfield
             return element.name == "Hunter Warfield";
           })
-        } else if (parts[clientPos].toLowerCase().includes("heacock")) {
-          group = clientGroups.find(function(element) {
+        } else if (parts[clientPos].toLowerCase().includes("heacock")) { //If the client starts with heacock
+          group = clientGroups.find(function(element) { //The group is Heacock Insurance
             return element.name == "Heacock Insurance";
           })
-        } else if (parts[clientPos].toLowerCase().includes("fw_")) {
-          group = clientGroups.find(function(element) {
+        } else if (parts[clientPos].toLowerCase().includes("fw_")) { //If the client starts with fw_
+          group = clientGroups.find(function(element) { //The group is Fleetwing
             return element.name == "Fleetwing";
           })
         }
-        if (group.name == "Hunter Warfield") return;
+        if (group.name == "Hunter Warfield") return; //If the group is Hunter Warfield try again
       }
     }
-    if (group == undefined) {
+    if (group == undefined) { //If the group is undefined ignore it
       return;
-    } else {
-      group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024);
+    } else { //Otherwise
+      group.size += (parseFloat(parts[sizePos].split('"')[1]) * 1024); //Add the size to the group object
     }
   });
   return new Promise(resolve => {
@@ -268,33 +266,33 @@ module.exports.parseUsageFile = function(id, clientGroups, clients) {
 
 
 /** Creat the report to be downloaded by the client */
-module.exports.createReport = async function(id, clientGroups, clients) {
-  var downloadPath = "/../../public/downloads/FinalBillingReportCommvault_" + id + ".csv"
+module.exports.createReport = async function(id, clientGroups, clients) { //Create the report for the user to download
+  var downloadPath = "/../../public/downloads/FinalBillingReportCommvault_" + id + ".csv" //Use the client id in download path
   console.log("Creating a Report File");
 
-  fs.writeFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {});
+  fs.writeFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {}); //Write headers
 
-  var s3 = await getS3Storage();
+  var s3 = await getS3Storage(); //Query AWS for bucket size
 
-  var hwi = clientGroups.find(function(element) {
+  var hwi = clientGroups.find(function(element) { //Find the hwi client group
     return element.name == "Hunter Warfield";
   });
 
-  if(hwi != undefined) hwi.S3 = s3;
+  if(hwi != undefined) hwi.S3 = s3; //If it is found set its S3 size
 
-  clientGroups.sort(compare);
+  clientGroups.sort(compare); //Sort the clients alphabetically
 
-  clientGroups.forEach(function(element) {
-    if (element.name == "Hunter Warfield") {
-      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
-    } else {
-      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {});
+  clientGroups.forEach(function(element) { //For each client group
+    if (element.name == "Hunter Warfield") { //If the client group is Hunter Warfield
+      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {}); //Write data with S3
+    } else { //Otherwise
+      fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {}); //Write data without S3
     }
   });
 
-  writeProgress('<a href="http://10.70.117.150:8081/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id);
+  writeProgress('<a href="http://10.70.117.150:8081/downloads/FinalBillingReportCommvault_' + id + '.csv">Download Report Here</a>', id); //Send download link
 
-  rimraf('./public/uploads/' + id, function() {});
+  rimraf('./public/uploads/' + id, function() {}); //Remove Upload files
 
   return new Promise(resolve => {
     resolve();
@@ -303,7 +301,7 @@ module.exports.createReport = async function(id, clientGroups, clients) {
 
 /** Write a line to the progress console in the browser window*/
 var writeProgress = module.exports.writeProgress = function(msg, id) {
-  fs.appendFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", msg + "<br>", function(err) {
+  fs.appendFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", msg + "<br>", function(err) { //Write message to the progress file ascociated with the user
     console.log(id + ": " + msg);
     if (err) return console.log(err);
   });
@@ -311,7 +309,7 @@ var writeProgress = module.exports.writeProgress = function(msg, id) {
 
 /** Clear progress text file*/
 var resetProgress = module.exports.resetProgress = function(id) {
-  fs.writeFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", "", function(err) {
+  fs.writeFile(__dirname + "/../../public/static/comm/progress/progress_" + id + ".txt", "", function(err) { //Clear the progress file ascociated with the user
     if (err) return console.log(err);
   });
 }
@@ -320,7 +318,7 @@ function getS3Storage() {
   return new Promise(resolve => {
     var aws = new Aws(AWSoptions);
     var d = new Date();
-    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=hwi-dpaas Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) {
+    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=hwi-dpaas Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) { //Run the awsCli command for getting the bucket size
       var size = data.object.Datapoints[0].Average / Math.pow(10, 9);
       resolve(size);
     });
