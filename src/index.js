@@ -47,7 +47,7 @@ scheduler.scheduleJob('0 * * * *', function() {
         console.log(err);
       }
       if (items.length > fileLimit) {
-        var files = fs.readdirSync(pathDown);
+        var files = fs.readdirSync(__dirname + pathDown);
         files.sort(function(a, b) {
           return fs.statSync(pathDown + b).mtime.getTime() -
             fs.statSync(pathDown + a).mtime.getTime();
