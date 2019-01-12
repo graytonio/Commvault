@@ -43,6 +43,9 @@ scheduler.scheduleJob('0 * * * *', function() {
   var fileLimit = 20;
   garbagePaths.forEach(function(pathDown) {
     fs.readdir(pathDown, function(err, items) {
+      if(err){
+        console.log(err);
+      }
       if (items.length > fileLimit) {
         var files = fs.readdirSync(pathDown);
         files.sort(function(a, b) {
@@ -53,7 +56,7 @@ scheduler.scheduleJob('0 * * * *', function() {
           fs.unlinkSync(pathDown + files[i]);
         }
       }
-    })
+    });
   })
 })
 //#endregion
