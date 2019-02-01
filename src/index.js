@@ -62,7 +62,7 @@ scheduler.scheduleJob('0 * * * *', function() {
 
 //#region storageReport
 app.post(storageReportUrl, function(req, res){
-  shell.exec(__dirname + '/storageReport.sh');
+  shell.exec(__dirname + '/storage-report.sh');
   res.sendFile(__dirname + '/output.log');
 });
 
