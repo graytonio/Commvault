@@ -10,6 +10,7 @@ const exec = require('child_process').exec;
 const url = require('url');
 const http = require('http');
 const cors = require('cors');
+const shell = require('shelljs');
 const app = express();
 const port = require('./port').port;
 //#endregion
@@ -22,10 +23,8 @@ var garbagePaths = [
 ]
 
 var commvaultUrl = '/commvault';
-var commvaultPath = '/comm/index.html'
-
 var cost_calculatorUrl = '/costcalc';
-var cost_calculatorPath = '/cost/index.html';
+var storageReportUrl = '/storagereport';
 
 //#region Web Service Configuration
 app.use(cors());
@@ -61,8 +60,14 @@ scheduler.scheduleJob('0 * * * *', function() {
 })
 //#endregion
 
-//#region Commvault
+//#region storageReport
+app.post(storageReportUrl, function(req, res){
+  shell.exec('./storageReport');
+});
 
+//#endregion
+
+//#region Commvault
 app.post(commvaultUrl + "/bug", function(req, res) {
   var form = new formidable.IncomingForm();
   form.parse(req);

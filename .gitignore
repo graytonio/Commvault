@@ -5,3 +5,5 @@ public/uploads/*
 public/static/comm/progress/*
 *.sh
 port.js
+src/pass/*
+storage-report.sh
