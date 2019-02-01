@@ -62,6 +62,7 @@ scheduler.scheduleJob('0 * * * *', function() {
 
 //#region storageReport
 app.post(storageReportUrl, function(req, res){
+  console.log("Start Script");
   shell.exec(__dirname + '/storage-report.sh');
   console.log("Executed");
   res.sendFile(__dirname + '/output.log');
