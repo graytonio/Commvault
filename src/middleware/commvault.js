@@ -272,13 +272,13 @@ module.exports.createReport = async function(id, clientGroups, clients) { //Crea
 
   fs.writeFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {}); //Write headers
 
-  var s3 = await getS3Storage(); //Query AWS for bucket size
+  //var s3 = await getS3Storage(); //Query AWS for bucket size
 
   var hwi = clientGroups.find(function(element) { //Find the hwi client group
     return element.name == "Hunter Warfield";
   });
 
-  if(hwi != undefined) hwi.S3 = s3; //If it is found set its S3 size
+  //if(hwi != undefined) hwi.S3 = s3; //If it is found set its S3 size
 
   clientGroups.sort(compare); //Sort the clients alphabetically
 
