@@ -283,7 +283,7 @@ module.exports.createReport = async function(id, clientGroups, clients) { //Crea
   clientGroups.sort(compare); //Sort the clients alphabetically
 
   clientGroups.forEach(function(element) { //For each client group
-    if (element.name == "Hunter Warfield") { //If the client group is Hunter Warfield
+    if (element.name == "Center for Sales Strategy") { //If the client group is Center for Sales Strategy
       fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + "," + element.S3 + "," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {}); //Write data with S3
     } else { //Otherwise
       fs.appendFileSync(__dirname + downloadPath, element.name + "," + Math.round(element.size) + ",," + element.APP + "," + element.DPF + "," + element.cSIM + "\n", function(err) {}); //Write data without S3
