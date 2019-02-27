@@ -38,26 +38,26 @@ app.use(bodyParser.json());
 //#endregion
 
 //#region Garbage Collection
-scheduler.scheduleJob('0 * * * *', function() {
-  var fileLimit = 20;
-  garbagePaths.forEach(function(pathDown) {
-    fs.readdir(pathDown, function(err, items) {
-      if(err){
-        console.log(err);
-      }
-      if (items.length > fileLimit) {
-        var files = fs.readdirSync(__dirname + pathDown);
-        files.sort(function(a, b) {
-          return fs.statSync(pathDown + b).mtime.getTime() -
-            fs.statSync(pathDown + a).mtime.getTime();
-        });
-        for (var i = files.length - 1; i > fileLimit; i--) {
-          fs.unlinkSync(pathDown + files[i]);
-        }
-      }
-    });
-  })
-})
+// scheduler.scheduleJob('0 * * * *', function() {
+//   var fileLimit = 20;
+//   garbagePaths.forEach(function(pathDown) {
+//     fs.readdir(pathDown, function(err, items) {
+//       if(err){
+//         console.log(err);
+//       }
+//       if (items.length > fileLimit) {
+//         var files = fs.readdirSync(__dirname + pathDown);
+//         files.sort(function(a, b) {
+//           return fs.statSync(pathDown + b).mtime.getTime() -
+//             fs.statSync(pathDown + a).mtime.getTime();
+//         });
+//         for (var i = files.length - 1; i > fileLimit; i--) {
+//           fs.unlinkSync(pathDown + files[i]);
+//         }
+//       }
+//     });
+//   })
+// })
 //#endregion
 
 //#region storageReport
