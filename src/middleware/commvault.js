@@ -318,7 +318,7 @@ function getS3Storage() {
   return new Promise(resolve => {
     var aws = new Aws(AWSoptions);
     var d = new Date();
-    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=centerforsalesstrategy Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) { //Run the awsCli command for getting the bucket size
+    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=centerforsalesstrategy Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) { //Run the awsCli command for getting the bucket size
       var size = data.object.Datapoints[0].Average / Math.pow(10, 9);
       resolve(size);
     });
