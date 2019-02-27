@@ -272,13 +272,13 @@ module.exports.createReport = async function(id, clientGroups, clients) { //Crea
 
   fs.writeFileSync(__dirname + downloadPath, "Client Group, Backup Size Actual (GB), Amazon S3 (GB), SSP-C-APP-Client, SSP-C-DPF-Client, SSP-cSIM-V-F-Client, SSP-C-DPSR-1T\n", function(err) {}); //Write headers
 
-  //var s3 = await getS3Storage(); //Query AWS for bucket size
+  var s3 = await getS3Storage(); //Query AWS for bucket size
 
-  var hwi = clientGroups.find(function(element) { //Find the hwi client group
-    return element.name == "Hunter Warfield";
+  var css = clientGroups.find(function(element) { //Find the hwi client group
+    return element.name == "Center for Sales Strategy";
   });
 
-  //if(hwi != undefined) hwi.S3 = s3; //If it is found set its S3 size
+  if(css != undefined) css.S3 = s3; //If it is found set its S3 size
 
   clientGroups.sort(compare); //Sort the clients alphabetically
 
@@ -318,7 +318,7 @@ function getS3Storage() {
   return new Promise(resolve => {
     var aws = new Aws(AWSoptions);
     var d = new Date();
-    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=hwi-dpaas Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) { //Run the awsCli command for getting the bucket size
+    aws.command('cloudwatch get-metric-statistics --metric-name BucketSizeBytes --namespace AWS/S3 --start-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + (d.getDate() - 1) + 'T00:00:00Z --end-time ' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + 'T00:00:00Z --statistics Average --unit Bytes --region us-east-1 --dimensions Name=BucketName,Value=centerforsalesstrategy Name=StorageType,Value=StandardStorage --period 86400 --output json').then(function(data) { //Run the awsCli command for getting the bucket size
       var size = data.object.Datapoints[0].Average / Math.pow(10, 9);
       resolve(size);
     });
