@@ -411,6 +411,10 @@ function groupRegex(client_p, stem, base, invalidGroups) {
 function getClientClientGroupIDByNamePromise(client_p, cb, clients) {
   var invalidGroups = ['1', '2', '23', '32', '138'];
   client.getPromise(server + "Client/byName(clientName='" + client_p.name + "')", args).then(function(value) {
+    if(value.data.App_GetClientPropertiesResponse == null){
+      cb();
+      return;
+    }
     var stem = value.data.App_GetClientPropertiesResponse.clientProperties;
     var base = stem.clientGroups;
     var group = groupRegex(client_p, stem, base, invalidGroups);
