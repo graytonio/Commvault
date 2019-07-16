@@ -1,10 +1,7 @@
-# DSM Automation Suite
+# Commvault Billing System
 
 ## Summary:
-A web tool designed to stream line the manual processes in DSM.  It includes the following tools with more to come in the future.
-
-Note:
-Connection details are contained in the not included options file and should be changed for production
+A web tool designed to stream line the manual processes of billing from Commvault data in DSM.
 
 ## Setup
 ```
